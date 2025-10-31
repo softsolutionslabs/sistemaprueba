@@ -137,7 +137,9 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
-
+CSRF_TRUSTED_ORIGINS = [
+    'https://walrus-app-z6gn3.ondigitalocean.app',
+]
 # =============================================================================
 # RAILWAY PRODUCTION SETTINGS
 # =============================================================================
