@@ -1,0 +1,65 @@
+{% load static %}
+
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="pragma" content="no-cache" />
+<meta http-equiv="cache-control" content="max-age=604800" />
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<title>DavBorn Store | La mejor tienda de tops de tops</title>
+
+<link href="{% static 'images/favicon.ico' %}" rel="shortcut icon" type="image/x-icon">
+
+<!-- jQuery -->
+<script src="{% static 'js/jquery-2.0.0.min.js' %}" type="text/javascript"></script>
+
+<!-- Font Awesome -->
+<link href="{% static 'fonts/fontawesome/css/all.min.css' %}" rel="stylesheet" type="text/css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+<!-- Bootstrap (base visual) -->
+<link href="{% static 'css/bootstrap.css' %}" rel="stylesheet" type="text/css"/>
+
+<!-- Estilos base del proyecto -->
+<link href="{% static 'css/ui.css' %}" rel="stylesheet" type="text/css"/>
+<link href="{% static 'css/custom.css' %}" rel="stylesheet" type="text/css"/>
+<link href="{% static 'css/responsive.css' %}" rel="stylesheet" media="only screen and (max-width: 1200px)" />
+
+<!-- Estilos personalizados (último, para sobrescribir todo lo anterior) -->
+<link href="{% static 'css/styles.css' %}" rel="stylesheet" type="text/css"/>
+
+<!-- Bootstrap JS -->
+<script src="{% static 'js/bootstrap.bundle.min.js' %}" type="text/javascript"></script>
+
+
+<!-- custom javascript -->
+<script src="{% static 'js/script.js' %}" type="text/javascript"></script>
+
+<script src="https://www.paypal.com/sdk/js?client-id=Aa33v-HZKPm0B4-dXWFzGh1COaGfif5H59dL7_J4EZ3YSVvOaH7uH5r9BbEOzKWQNrWJPS1G9nl0N40M&currency=USD&intent=capture"></script>
+
+
+<script type="text/javascript">
+/// some script
+
+// jquery ready start
+$(document).ready(function(){
+    setTimeout(function(){
+        $('#message').fadeOut('slow');
+    }, 4000);
+});
+// jquery end
+</script>
+
+</head>
+<body>
+
+{% include 'includes/navbar.html' %}
+
+
+    {% block content %}
+
+    {% endblock %}
+
+{% include 'includes/footer.html' %}

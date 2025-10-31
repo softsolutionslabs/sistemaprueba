@@ -1,0 +1,121 @@
+{% load static %}
+
+<header class="section-header">
+    <section class="header-main border-bottom">
+        <div class="container">
+            <div class="row align-items-center">
+
+                <div class="col-lg-2 col-md-3 col-6">
+                    <a href="{% url 'home' %}" class="brand-wrap">
+                        <img class="logo" src="{% static './images/logoDavBorn.png' %}" alt="Logo DavBorn">
+                    </a>
+                </div>
+
+                <div class="col-lg-7 col-md-9 col-12 order-3 order-md-2">
+                    <div class="d-flex justify-content-between">
+                        <nav class="d-none d-md-flex align-items-center">
+                            <div class="category-wrap dropdown d-inline-block">
+                                <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="fa fa-bars"></i> Categorías
+                                </button>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="{% url 'store' %}">Todos los Productos</a>
+                                    {% for category in links %}
+                                    <a class="dropdown-item" href="{{ category.get_url }}">{{ category.category_name }}</a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <a href="{% url 'store' %}" class="btn btn-outline-primary ml-3">Tienda</a>
+                            <a href="{% url 'chat:chat' %}" class="btn btn-primary ml-2">Chat AI</a>
+                        </nav>
+
+                        <form action="{% url 'search' %}" class="search flex-grow-1 ml-md-4">
+                            <div class="input-group w-100">
+                                <input type="text" class="form-control" placeholder="Buscar Productos" name="keyword">
+                                <div class="input-group-append">
+                                    <button class="btn btn-primary" type="submit">
+                                        <i class="fa fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-md-12 col-6 order-2 order-md-3">
+                    <div class="d-flex justify-content-end align-items-center">
+                        
+                        <div class="widget-header">
+                            {% if user.is_authenticated %}
+                            <small class="title text-muted">Bienvenido, {{ user.first_name|default:user.username }}</small>
+                            <div>
+                                <a href="{% url 'dashboard' %}">Dashboard</a>
+                                {% if user.is_superadmin or user.is_admin or user.is_staff %}
+                                <span class="dark-transp"> | </span>
+                                <a href="{% url 'admin_panel:dashboard' %}" class="text-warning">
+                                    {% if user.is_superadmin %}👑 SuperAdmin
+                                    {% elif user.is_admin %}🛡️ Admin
+                                    {% else %}📊 Vendedor
+                                    {% endif %}
+                                </a>
+                                {% endif %}
+                                <span class="dark-transp"> | </span>
+                                <a href="{% url 'logout' %}">Cerrar Sesión</a>
+                            </div>
+                            {% else %}
+                            <small class="title text-muted">Bienvenido visitante!</small>
+                            <div>
+                                <a href="{% url 'login' %}">Login</a>
+                                <span class="dark-transp"> | </span>
+                                <a href="{% url 'register' %}">Registrar</a>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <a href="{% url 'help_center:help_center' %}" class="widget-header pl-3 ml-3" title="Centro de Ayuda">
+                            <div class="icon icon-sm rounded-circle border"><i class="fa fa-question-circle"></i></div>
+                        </a>
+
+                        <a href="{% url 'cart' %}" class="widget-header pl-3 ml-3" title="Carrito">
+                            <div class="icon icon-sm rounded-circle border"><i class="fa fa-shopping-cart"></i></div>
+                            {% if cart_count > 0 %}
+                            <span class="badge badge-pill badge-danger notify">{{ cart_count }}</span>
+                            {% endif %}
+                        </a>
+
+                        <div class="d-md-none ml-3">
+                            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarMobileMenu" aria-controls="navbarMobileMenu" aria-expanded="false" aria-label="Toggle navigation">
+                                <span class="navbar-toggler-icon"></span>
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div> </div> </section> <nav class="navbar navbar-expand-md navbar-light border-bottom d-md-none">
+        <div class="container">
+            <div class="collapse navbar-collapse" id="navbarMobileMenu">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'store' %}">Tienda</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'chat:chat' %}">Chat AI</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownCategories" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Categorías
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdownCategories">
+                            <a class="dropdown-item" href="{% url 'store' %}">Todos los Productos</a>
+                             {% for category in links %}
+                            <a class="dropdown-item" href="{{ category.get_url }}">{{ category.category_name }}</a>
+                            {% endfor %}
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+</header>

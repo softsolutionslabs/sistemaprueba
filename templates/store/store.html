@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<!-- ========================= SECTION PAGETOP ========================= -->
+<section class="section-pagetop bg">
+    <div class="container">
+        <h2 class="title-page">Nuestra Tienda</h2>
+    </div>
+</section>
+<!-- ========================= SECTION INTRO END// ========================= -->
+
+<!-- ========================= SECTION CONTENT ========================= -->
+<section class="section-content padding-y">
+    <div class="container">
+        <div class="row">
+            <aside class="col-md-3">
+                <div class="card">
+                    <article class="filter-group">
+                        <header class="card-header">
+                            <a href="#" data-toggle="collapse" data-target="#collapse_1" aria-expanded="true" class="">
+                                <i class="icon-control fa fa-chevron-down"></i>
+                                <h6 class="title">Categorias</h6>
+                            </a>
+                        </header>
+                        <div class="filter-content collapse show" id="collapse_1" style="">
+                            <div class="card-body">
+                                <ul class="list-menu">
+                                    <li><a href="{% url 'store' %}" class="category-link" data-category="all">Todos</a></li>
+                                    {% for category in links %}
+                                    <li><a href="{{ category.get_url }}" class="category-link" data-category="{{ category.slug }}">{{ category.category_name }}</a></li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="filter-group">
+                        <header class="card-header">
+                            <a href="#" data-toggle="collapse" data-target="#collapse_3" aria-expanded="true" class="">
+                                <i class="icon-control fa fa-chevron-down"></i>
+                                <h6 class="title">Precios </h6>
+                            </a>
+                        </header>
+                        <div class="filter-content collapse show" id="collapse_3" style="">
+                            <div class="card-body">
+                                <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <label>Mín</label>
+                                        <input type="number" id="minPrice" class="form-control" placeholder="Gs. 0" min="0" value="{{ min_price|default:0 }}">
+                                    </div>
+                                    <div class="form-group text-right col-md-6">
+                                        <label>Máx</label>
+                                        <input type="number" id="maxPrice" class="form-control" placeholder="Gs. 1000000" min="0" value="{{ max_price|default:1000000 }}">
+                                    </div>
+                                </div>
+                                
+                                <!-- Display del rango actual -->
+                                <div class="price-range-display text-center mb-2">
+                                    <small id="currentRange">Gs. {{ min_price|default:0|floatformat:0 }} - Gs. {{ max_price|default:1000000|floatformat:0 }}</small>
+                                </div>
+                                
+                                <button id="applyPriceFilter" class="btn btn-block btn-primary">Aplicar Filtro</button>
+                                <button id="clearPriceFilter" class="btn btn-block btn-outline-secondary mt-2">Limpiar</button>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </aside>
+
+            <main class="col-md-9">
+                <header class="border-bottom mb-4 pb-3">
+                    <div class="form-inline">
+                        <span class="mr-md-auto" id="productCount"> <b>{{ product_count }}</b> Productos Encontrados </span>
+                    </div>
+                </header>
+
+                <!-- Contenedor de productos -->
+                <div class="row" id="productsContainer">
+                    {% if products %}
+                    {% for product in products %}
+                    <div class="col-md-4 mb-4">
+                        <figure class="card card-product-grid">
+                            <div class="img-wrap">
+                                <a href="{{ product.get_url }}"><img src="{{ product.images.url }}" alt="{{ product.product_name }}"></a>
+                            </div>
+                            <figcaption class="info-wrap">
+                                <div class="fix-height">
+                                    <a href="{{ product.get_url }}" class="title">{{ product.product_name }}</a>
+                                    <div class="price-wrap mt-2">
+                                        <span class="price">Gs. {{ product.price }}</span>
+                                    </div>
+                                </div>
+                                <a href="{% url 'add_cart' product.id %}" class="btn btn-block btn-success">Agregar al Carrito</a>
+                            </figcaption>
+                        </figure>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="col-12">
+                        <div class="alert alert-info">No se encontraron productos. Intente más tarde.</div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Paginación (se ocultará con filtros AJAX) -->
+                <nav class="mt-4" aria-label="Page navigation sample" id="paginationContainer">
+                    {% if products.has_other_pages %}
+                    <ul class="pagination">
+                        {% if products.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?page={{ products.previous_page_number }}">Anterior</a></li>
+                        {% else %}
+                        <li class="page-item disabled"><a class="page-link" href="#">Anterior</a></li>
+                        {% endif %}
+
+                        {% for i in products.paginator.page_range %}
+                        {% if products.number == i %}
+                        <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                        {% else %}
+                        <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                        {% endif %}
+                        {% endfor %}
+
+                        {% if products.has_next %}
+                        <li class="page-item"><a class="page-link" href="?page={{ products.next_page_number }}">Siguiente</a></li>
+                        {% else %}
+                        <li class="page-item disabled"><a class="page-link" href="#">Siguiente</a></li>
+                        {% endif %}
+                    </ul>
+                    {% endif %}
+                </nav>
+            </main>
+        </div>
+    </div>
+</section>
+
+<!-- JavaScript para el filtro de precios -->
+<script>
+class PriceFilter {
+    constructor() {
+        this.minPrice = {{ min_price|default:0 }};
+        this.maxPrice = {{ max_price|default:1000000 }};
+        this.currentCategory = '{{ request.resolver_match.kwargs.category_slug|default:"all" }}';
+        this.init();
+    }
+
+    init() {
+        this.bindEvents();
+        this.updatePriceDisplay();
+    }
+
+    bindEvents() {
+        // Botón aplicar filtro
+        document.getElementById('applyPriceFilter').addEventListener('click', () => {
+            this.applyFilter();
+        });
+
+        // Botón limpiar filtro
+        document.getElementById('clearPriceFilter').addEventListener('click', () => {
+            this.clearFilter();
+        });
+
+        // Inputs de precio
+        document.getElementById('minPrice').addEventListener('input', (e) => {
+            this.minPrice = parseInt(e.target.value) || 0;
+            this.updatePriceDisplay();
+        });
+
+        document.getElementById('maxPrice').addEventListener('input', (e) => {
+            this.maxPrice = parseInt(e.target.value) || 1000000;
+            this.updatePriceDisplay();
+        });
+
+        // Links de categoría
+        document.querySelectorAll('.category-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.currentCategory = link.dataset.category;
+                window.location.href = link.href; // Navegar a la categoría
+            });
+        });
+
+        // Enter en inputs
+        document.getElementById('minPrice').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.applyFilter();
+        });
+
+        document.getElementById('maxPrice').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.applyFilter();
+        });
+    }
+
+    updatePriceDisplay() {
+        document.getElementById('currentRange').textContent = 
+            `Gs. ${this.minPrice.toLocaleString('es-PY')} - Gs. ${this.maxPrice.toLocaleString('es-PY')}`;
+    }
+
+    async applyFilter() {
+        try {
+            // Validar que min no sea mayor que max
+            if (this.minPrice > this.maxPrice) {
+                alert('El precio mínimo no puede ser mayor al máximo');
+                return;
+            }
+
+            const url = new URL('/store/api/filter-by-price/', window.location.origin);
+            url.searchParams.append('min_price', this.minPrice);
+            url.searchParams.append('max_price', this.maxPrice);
+            
+            if (this.currentCategory && this.currentCategory !== 'all') {
+                url.searchParams.append('category_slug', this.currentCategory);
+            }
+
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.success) {
+                this.displayFilteredProducts(data.products, data.count);
+            } else {
+                alert('Error al aplicar filtro: ' + data.error);
+            }
+
+        } catch (error) {
+            console.error('Error applying filter:', error);
+            alert('Error al aplicar el filtro');
+        }
+    }
+
+    displayFilteredProducts(products, count) {
+        const productsContainer = document.getElementById('productsContainer');
+        const productCount = document.getElementById('productCount');
+        const paginationContainer = document.getElementById('paginationContainer');
+        
+        let html = '';
+
+        if (products.length === 0) {
+            html = `
+                <div class="col-12">
+                    <div class="alert alert-warning text-center">
+                        No se encontraron productos en este rango de precios.
+                    </div>
+                </div>
+            `;
+        } else {
+            products.forEach(product => {
+                html += `
+                    <div class="col-md-4 mb-4">
+                        <figure class="card card-product-grid">
+                            <div class="img-wrap">
+                                <a href="${product.url}"><img src="${product.image_url}" alt="${product.name}"></a>
+                            </div>
+                            <figcaption class="info-wrap">
+                                <div class="fix-height">
+                                    <a href="${product.url}" class="title">${product.name}</a>
+                                    <div class="price-wrap mt-2">
+                                        <span class="price">${product.formatted_price}</span>
+                                    </div>
+                                </div>
+                                <a href="${product.add_to_cart_url}" class="btn btn-block btn-success">Agregar al Carrito</a>
+                            </figcaption>
+                        </figure>
+                    </div>
+                `;
+            });
+        }
+
+        productsContainer.innerHTML = html;
+        productCount.innerHTML = `<b>${count}</b> Productos Encontrados`;
+        paginationContainer.style.display = 'none'; // Ocultar paginación en filtros
+    }
+
+    clearFilter() {
+        this.minPrice = {{ min_price|default:0 }};
+        this.maxPrice = {{ max_price|default:1000000 }};
+        
+        document.getElementById('minPrice').value = this.minPrice;
+        document.getElementById('maxPrice').value = this.maxPrice;
+        
+        this.updatePriceDisplay();
+        location.reload(); // Recargar para mostrar todos los productos
+    }
+}
+
+// Inicializar cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    window.priceFilter = new PriceFilter();
+});
+</script>
+
+{% endblock %}

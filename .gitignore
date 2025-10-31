@@ -1,0 +1,26 @@
+# .gitignore
+# Django
+*.pyc
+*~
+__pycache__/
+*.sqlite3
+*.log
+.env
+.env.local
+
+# Static files
+/staticfiles/
+/media/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.dockerignore

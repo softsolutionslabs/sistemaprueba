@@ -1,0 +1,106 @@
+/**
+ * STYLESHEET RESPONSIVE
+ *
+ * Este archivo contiene todos los estilos para adaptar el diseño
+ * a diferentes tamaños de pantalla, usando un enfoque "desktop-first"
+ * (de más grande a más pequeño).
+ */
+
+/* ==========================================================================
+   Breakpoint para Tablets y Portátiles Pequeños (<= 992px)
+   ========================================================================== */
+
+@media (max-width: 992px) {
+  /* Ajustes en componentes principales */
+  .slider-main .item-slide {
+    height: auto;
+  }
+
+  /* Ajustes en la tabla del carrito de compras */
+  .table-shopping-cart tr td:first-child {
+    width: 250px; /* Ancho específico para la columna de imagen/producto */
+  }
+  .table-shopping-cart .itemside .info {
+    padding: 0;
+  }
+  .table-shopping-cart .itemside .aside {
+    display: none;
+  }
+}
+
+
+/* ==========================================================================
+   Breakpoint para Dispositivos Móviles (<= 768px)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  /* --- Utilidades de Visibilidad --- */
+  .mobile-block {
+    display: block !important;
+  }
+
+  .mobile-hide {
+    display: none !important;
+  }
+
+  /* --- Ajustes de Layout Específicos --- */
+  .section-header .logo {
+    max-height: 40px;
+    width: auto;
+  }
+
+  .section-header .header-main .brand-wrap {
+    display: inline-block;
+    margin-bottom: var(--space-md);
+  }
+
+  .section-header .header-main .search {
+    margin-bottom: var(--space-md);
+  }
+
+  .navbar-expand .navbar-collapse {
+    flex-direction: column;
+  }
+
+  .item-feature {
+    margin-bottom: var(--space-lg);
+  }
+
+  /* --- Utilidades de Orden (Flexbox/Grid) --- */
+  .mobile-order-first {
+    order: -1;
+  }
+  .mobile-order-1 {
+    order: 1;
+  }
+  .mobile-order-2 {
+    order: 2;
+  }
+  .mobile-order-3 {
+    order: 3;
+  }
+
+  /* --- Utilidades de Espaciado --- */
+  /* Usando variables CSS para consistencia */
+  .mobile-py {
+    padding-top: var(--space-lg);
+    padding-bottom: var(--space-lg);
+  }
+  .mobile-pb {
+    padding-bottom: var(--space-lg);
+  }
+  .mobile-pt {
+    padding-top: var(--space-lg);
+  }
+}
+
+/* El bloque .mobile-block inicial fuera de las media queries se puede eliminar 
+  si su único propósito es ser sobrescrito en el breakpoint de 768px.
+  Lo he mantenido por si lo usas como base, pero considera si es necesario.
+*/
+.mobile-block {
+  display: none;
+}
+
+
+/*# sourceMappingURL=responsive.css.map */

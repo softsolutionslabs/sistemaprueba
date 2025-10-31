@@ -1,0 +1,883 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar con funcionalidades -->
+        <div class="col-md-3 sidebar">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Funciones del Chat</h5>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-outline-primary btn-sm mb-2 w-100" onclick="generateStockPDF()">
+                        📊 Descargar Stock PDF
+                    </button>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Productos por Categoría:</label>
+                        <select class="form-select" id="categorySelect" onchange="getProductsByCategory()">
+                            <option value="">Seleccionar categoría</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.category_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Comparar Productos:</label>
+                        <select class="form-select" id="productSelect1">
+                            <option value="">Producto 1</option>
+                        </select>
+                        <select class="form-select mt-2" id="productSelect2">
+                            <option value="">Producto 2</option>
+                        </select>
+                        <button class="btn btn-outline-success btn-sm mt-2 w-100" onclick="compareProducts()">
+                            🔄 Comparar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resultados de categorías -->
+            <div id="categoryResults" class="mt-3" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h6>Productos de la categoría</h6>
+                    </div>
+                    <div class="card-body" id="categoryProductsList">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Área principal del chat -->
+        <div class="col-md-9">
+            <div class="card chat-container">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">💬 Asistente Virtual</h4>
+                    <span class="badge bg-light text-primary" id="connectionStatus">Conectado</span>
+                </div>
+
+                <div class="card-body chat-messages" id="chatMessages">
+                    {% for message in messages %}
+                    <div class="message user-message">
+                        <div class="message-header">
+                            <strong>{% if message.user %}{{ message.user.username }}{% else %}Tú{% endif %}</strong>
+                            <small class="text-muted">{{ message.timestamp|date:"H:i" }}</small>
+                        </div>
+                        <div class="message-content">{{ message.user_message }}</div>
+                    </div>
+                    <div class="message bot-message">
+                        <div class="message-header">
+                            <strong>🤖 Asistente</strong>
+                            <small class="text-muted">{{ message.timestamp|date:"H:i" }}</small>
+                        </div>
+                        <div class="message-content">{{ message.bot_response|linebreaks }}</div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted mt-5">
+                        <p>¡Bienvenido! Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?</p>
+                        <p>Puedo ayudarte con:</p>
+                        <ul class="list-unstyled">
+                            <li>✅ Información de productos y stock</li>
+                            <li>✅ Proceso de compra y envíos</li>
+                            <li>✅ Gestión de tu cuenta</li>
+                            <li>✅ Comparación de productos</li>
+                        </ul>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="card-footer">
+                    <form id="chatForm">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            {{ form.message }}
+                            <button type="submit" class="btn btn-primary" id="sendButton">
+                                <span class="spinner-border spinner-border-sm d-none" id="spinner"></span>
+                                <span id="buttonText">Enviar</span>
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="mt-2 text-center">
+                        <button id="viewChartButton" class="btn btn-success btn-sm" disabled onclick="viewChart()">
+                            <span id="chartButtonText">📊 Ver Gráfico</span>
+                        </button>
+                        <small class="text-muted d-block mt-1" id="chartStatus">No hay gráfico disponible</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para comparación -->
+<div class="modal fade" id="comparisonModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">🔍 Comparación de Productos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="comparisonContent">
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Variables de colores del tema principal */
+:root {
+    --color-bg: #ffffff;
+    --color-bg-alt: #fdf6ec;
+    --color-bg-muted: #f8f9fa;
+    --color-bg-dark: #f5ebda;
+    --color-text: #2c3e50;
+    --color-text-muted: #95a5a6;
+    --color-text-light: #ffffff;
+    --color-accent: #a1887f;
+    --color-accent-hover: #8d6e63;
+    --color-accent-light: #c19a6b;
+    --color-accent-very-light: #f5ebda;
+    --color-border: #dee2e6;
+    --color-border-dark: #adb5bd;
+    --color-shadow: rgba(0, 0, 0, 0.08);
+    --color-shadow-dark: rgba(0, 0, 0, 0.15);
+    
+    /* Espaciado */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    
+    /* Bordes */
+    --border-radius-sm: 0.375rem;
+    --border-radius: 0.5rem;
+    --border-radius-lg: 0.75rem;
+    --border-radius-xl: 1rem;
+    
+    /* Transiciones */
+    --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Sombras */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.chat-container {
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    background: var(--color-bg);
+    box-shadow: var(--shadow);
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-lg);
+    background-color: var(--color-bg-muted);
+    scroll-behavior: smooth;
+}
+
+/* Scrollbar personalizado */
+.chat-messages::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+    background: var(--color-bg-muted);
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+    background: var(--color-border-dark);
+    border-radius: var(--border-radius);
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-muted);
+}
+
+.message {
+    margin-bottom: var(--space-lg);
+    max-width: 70%;
+    animation: messageSlide var(--transition-base);
+}
+
+/* Animación de entrada para mensajes */
+@keyframes messageSlide {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.user-message {
+    margin-left: auto;
+}
+
+.bot-message {
+    margin-right: auto;
+}
+
+.message-header {
+    font-size: 0.875rem;
+    margin-bottom: var(--space-xs);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--color-text-muted);
+    font-weight: 500;
+}
+
+.message-content {
+    padding: var(--space-md) var(--space-lg);
+    border-radius: var(--border-radius-lg);
+    word-wrap: break-word;
+    line-height: 1.5;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--transition-base);
+}
+
+.message-content:hover {
+    box-shadow: var(--shadow);
+}
+
+.user-message .message-content {
+    background-color: var(--color-accent);
+    color: var(--color-text-light);
+    border-bottom-right-radius: var(--border-radius-sm);
+}
+
+.bot-message .message-content {
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    border-bottom-left-radius: var(--border-radius-sm);
+}
+
+.sidebar {
+    background-color: var(--color-bg-alt);
+    min-height: 80vh;
+    padding: var(--space-lg);
+    border-right: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+}
+
+.sidebar h3 {
+    color: var(--color-text);
+    font-weight: 600;
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-sm);
+    border-bottom: 2px solid var(--color-accent);
+}
+
+.product-item {
+    border-bottom: 1px solid var(--color-border);
+    padding: var(--space-md) 0;
+    transition: all var(--transition-base);
+    cursor: pointer;
+}
+
+.product-item:hover {
+    background-color: var(--color-accent-very-light);
+    padding-left: var(--space-sm);
+    border-radius: var(--border-radius);
+}
+
+.product-item:last-child {
+    border-bottom: none;
+}
+
+.product-item .product-name {
+    color: var(--color-text);
+    font-weight: 500;
+    margin-bottom: var(--space-xs);
+    transition: color var(--transition-base);
+}
+
+.product-item:hover .product-name {
+    color: var(--color-accent);
+}
+
+.product-item .product-price {
+    color: var(--color-accent);
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.product-item .product-description {
+    color: var(--color-text-muted);
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    margin-top: var(--space-xs);
+}
+
+/* Área de input del chat */
+.chat-input-area {
+    padding: var(--space-md);
+    border-top: 1px solid var(--color-border);
+    background: var(--color-bg);
+    display: flex;
+    gap: var(--space-sm);
+    align-items: center;
+}
+
+.chat-input-area input,
+.chat-input-area textarea {
+    flex: 1;
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    transition: all var(--transition-base);
+    background-color: var(--color-bg);
+    color: var(--color-text);
+}
+
+.chat-input-area input:focus,
+.chat-input-area textarea:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-very-light);
+}
+
+.chat-input-area button {
+    padding: var(--space-sm) var(--space-lg);
+    background-color: var(--color-accent);
+    color: var(--color-text-light);
+    border: 1px solid var(--color-accent);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    font-weight: 500;
+}
+
+.chat-input-area button:hover {
+    background-color: var(--color-accent-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.chat-input-area button:active {
+    transform: translateY(0);
+}
+
+/* Estado de escritura */
+.typing-indicator {
+    display: flex;
+    gap: var(--space-xs);
+    padding: var(--space-md);
+}
+
+.typing-indicator span {
+    width: 8px;
+    height: 8px;
+    background-color: var(--color-accent);
+    border-radius: 50%;
+    animation: typing 1.4s infinite;
+}
+
+.typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typing {
+    0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.7;
+    }
+    30% {
+        transform: translateY(-10px);
+        opacity: 1;
+    }
+}
+
+/* Responsive */
+@media (min-width: 768px) {
+    .message {
+        max-width: 60%;
+    }
+    
+    .chat-messages {
+        padding: var(--space-xl);
+    }
+}
+
+@media (max-width: 767px) {
+    .chat-container {
+        height: 70vh;
+    }
+    
+    .sidebar {
+        min-height: auto;
+        padding: var(--space-md);
+    }
+    
+    .message {
+        max-width: 85%;
+    }
+}
+
+
+</style>
+
+<style>
+/* Estilos para mensajes con gráficos */
+.chart-message .message-content {
+    background: linear-gradient(135deg, #e3f2fd, #f3e5f5);
+    border-left: 4px solid #2196f3;
+}
+
+.chart-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.chart-buttons .btn {
+    flex: 1;
+    min-width: 120px;
+}
+
+/* Modal de gráficos */
+#chartModal .modal-body img {
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+</style>
+
+<style>
+/* Estilos para el botón de gráfico */
+#viewChartButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#viewChartButton:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.chart-status-available {
+    color: #28a745 !important;
+    font-weight: 500;
+}
+</style>
+
+<script>
+// Estado del gráfico
+let currentChartAvailable = false;
+let currentChartData = null;
+
+// Cargar lista de productos al iniciar
+document.addEventListener('DOMContentLoaded', function() {
+    loadProductList();
+});
+
+function loadProductList() {
+    fetch('/chat/api/stock-list/')
+        .then(response => response.json())
+        .then(data => {
+            const select1 = document.getElementById('productSelect1');
+            const select2 = document.getElementById('productSelect2');
+            
+            select1.innerHTML = '<option value="">Producto 1</option>';
+            select2.innerHTML = '<option value="">Producto 2</option>';
+            
+            data.products.forEach(product => {
+                const option = `<option value="${product.id}">${product.display}</option>`;
+                select1.innerHTML += option;
+                select2.innerHTML += option;
+            });
+        });
+}
+
+// Manejo del formulario de chat
+document.getElementById('chatForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    sendMessage();
+});
+
+function sendMessage() {
+    const formData = new FormData(document.getElementById('chatForm'));
+    const button = document.getElementById('sendButton');
+    const spinner = document.getElementById('spinner');
+    const buttonText = document.getElementById('buttonText');
+    
+    // Deshabilitar botón de gráfico temporalmente
+    disableChartButton();
+    
+    // Mostrar spinner
+    spinner.classList.remove('d-none');
+    buttonText.textContent = 'Enviando...';
+    button.disabled = true;
+    
+    fetch('/chat/api/send-message/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            addMessageToChat(data.user_message, data.bot_response, data.timestamp);
+            document.getElementById('chatForm').reset();
+            
+            // VERIFICAR SI ES UNA CONSULTA DE GRÁFICO - VERSIÓN CORREGIDA
+            checkForChart(data.user_message, data.bot_response);
+        } else {
+            alert('Error al enviar mensaje: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error de conexión');
+    })
+    .finally(() => {
+        spinner.classList.add('d-none');
+        buttonText.textContent = 'Enviar';
+        button.disabled = false;
+    });
+}
+
+// FUNCIÓN PRINCIPAL PARA DETECTAR GRÁFICOS - VERSIÓN MEJORADA
+function checkForChart(userMessage, botResponse) {
+    console.log("🔍 Verificando gráfico para:", userMessage);
+    
+    // DETECCIÓN MUY AGRESIVA - Cualquier mención de gráfico
+    const userHasChart = userMessage.toLowerCase().includes('gráfico') || 
+                        userMessage.toLowerCase().includes('grafico') ||
+                        userMessage.toLowerCase().includes('chart') ||
+                        userMessage.toLowerCase().includes('estadística') ||
+                        userMessage.toLowerCase().includes('estadisticas');
+    
+    const responseHasChart = botResponse.includes('Gráfico') || 
+                           botResponse.includes('🥧') || 
+                           botResponse.includes('📊') ||
+                           botResponse.includes('📈') ||
+                           botResponse.includes('descargar');
+    
+    console.log("Usuario tiene gráfico:", userHasChart);
+    console.log("Respuesta tiene gráfico:", responseHasChart);
+    
+    if (userHasChart || responseHasChart) {
+        console.log("✅ Detectado gráfico - Generando...");
+        // Habilitar botón inmediatamente
+        enableChartButton("📊 Generando gráfico...");
+        
+        // Generar gráfico
+        setTimeout(() => {
+            generateDynamicChart(userMessage);
+        }, 500);
+    } else {
+        console.log("❌ No se detectó gráfico");
+        disableChartButton();
+    }
+}
+
+// GENERAR GRÁFICO DINÁMICO - VERSIÓN MEJORADA
+function generateDynamicChart(userMessage) {
+    const chartButton = document.getElementById('viewChartButton');
+    const chartStatus = document.getElementById('chartStatus');
+    
+    console.log("🚀 Iniciando generación de gráfico para:", userMessage);
+    
+    // Mostrar estado de carga
+    chartStatus.textContent = "🔄 Generando gráfico...";
+    chartButton.disabled = true;
+    
+    fetch('/chat/api/generate-dynamic-chart/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ user_message: userMessage })
+    })
+    .then(response => {
+        console.log("📡 Respuesta del servidor - Status:", response.status);
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log("📊 Datos recibidos del servidor:", data);
+        
+        if (data.success && data.has_chart) {
+            currentChartAvailable = true;
+            currentChartData = data;
+            enableChartButton(`📊 ${data.title}`);
+            chartStatus.textContent = "✅ Gráfico listo - Haz clic para ver";
+            console.log("✅ Gráfico generado exitosamente:", data.title);
+        } else {
+            const errorMsg = data.error || "No se pudo generar el gráfico";
+            disableChartButton();
+            chartStatus.textContent = `❌ ${errorMsg}`;
+            console.log("❌ Error del servidor:", errorMsg);
+        }
+    })
+    .catch(error => {
+        console.error('🚨 Error en la conexión:', error);
+        disableChartButton();
+        chartStatus.textContent = "❌ Error de conexión con el servidor";
+        
+        // Mostrar más detalles después de un tiempo
+        setTimeout(() => {
+            chartStatus.textContent = `❌ Error: ${error.message}`;
+        }, 2000);
+    });
+}
+
+// HABILITAR BOTÓN DE GRÁFICO
+function enableChartButton(title = "📊 Ver Gráfico") {
+    const chartButton = document.getElementById('viewChartButton');
+    const chartStatus = document.getElementById('chartStatus');
+    
+    chartButton.disabled = false;
+    chartButton.innerHTML = `<span>${title}</span>`;
+    chartStatus.textContent = "✅ Gráfico listo - Haz clic para ver";
+    chartStatus.className = "text-success d-block mt-1";
+    console.log("✅ Botón de gráfico habilitado");
+}
+
+// DESHABILITAR BOTÓN DE GRÁFICO
+function disableChartButton() {
+    const chartButton = document.getElementById('viewChartButton');
+    const chartStatus = document.getElementById('chartStatus');
+    
+    currentChartAvailable = false;
+    currentChartData = null;
+    chartButton.disabled = true;
+    chartButton.innerHTML = '<span>📊 Ver Gráfico</span>';
+    chartStatus.textContent = "No hay gráfico disponible";
+    chartStatus.className = "text-muted d-block mt-1";
+    console.log("❌ Botón de gráfico deshabilitado");
+}
+
+// VER GRÁFICO
+function viewChart() {
+    console.log("👁️ Intentando ver gráfico...");
+    
+    if (!currentChartAvailable) {
+        alert("No hay gráfico disponible para ver.");
+        return;
+    }
+    
+    const chartStatus = document.getElementById('chartStatus');
+    chartStatus.textContent = "🔄 Cargando gráfico...";
+    
+    fetch('/chat/api/preview-chart/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showChartModal(data.image_base64, data.title);
+            chartStatus.textContent = "✅ Gráfico listo - Haz clic para ver";
+            console.log("✅ Gráfico cargado en modal");
+        } else {
+            alert('Error al cargar gráfico: ' + data.error);
+            chartStatus.textContent = "❌ Error cargando gráfico";
+            console.log("❌ Error cargando gráfico:", data.error);
+        }
+    })
+    .catch(error => {
+        alert('Error de conexión: ' + error.message);
+        chartStatus.textContent = "❌ Error de conexión";
+        console.log("❌ Error de conexión:", error);
+    });
+}
+
+// MOSTRAR MODAL CON GRÁFICO
+function showChartModal(imageBase64, title) {
+    // Crear modal dinámicamente
+    const modalHtml = `
+        <div class="modal fade" id="chartModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">📊 ${title}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <img src="data:image/png;base64,${imageBase64}" 
+                             alt="${title}" 
+                             style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="button" class="btn btn-primary" onclick="downloadChart()">
+                            💾 Descargar PNG
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remover modal existente
+    const existingModal = document.getElementById('chartModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Agregar nuevo modal
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Mostrar modal
+    const chartModal = new bootstrap.Modal(document.getElementById('chartModal'));
+    chartModal.show();
+}
+
+// DESCARGAR GRÁFICO
+function downloadChart() {
+    console.log("💾 Descargando gráfico...");
+    window.open('/chat/api/download-chart/', '_blank');
+}
+
+// FUNCIONES EXISTENTES (mantener igual)
+function addMessageToChat(userMessage, botResponse, timestamp) {
+    const chatMessages = document.getElementById('chatMessages');
+    
+    // Mensaje del usuario
+    const userMsgDiv = document.createElement('div');
+    userMsgDiv.className = 'message user-message';
+    userMsgDiv.innerHTML = `
+        <div class="message-header">
+            <strong>Tú</strong>
+            <small class="text-muted">${timestamp}</small>
+        </div>
+        <div class="message-content">${userMessage}</div>
+    `;
+    
+    // Respuesta del bot
+    const botMsgDiv = document.createElement('div');
+    botMsgDiv.className = 'message bot-message';
+    botMsgDiv.innerHTML = `
+        <div class="message-header">
+            <strong>🤖 Asistente</strong>
+            <small class="text-muted">${timestamp}</small>
+        </div>
+        <div class="message-content">${botResponse.replace(/\n/g, '<br>')}</div>
+    `;
+    
+    chatMessages.appendChild(userMsgDiv);
+    chatMessages.appendChild(botMsgDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function generateStockPDF() {
+    window.open('/chat/stock/pdf/', '_blank');
+}
+
+function getProductsByCategory() {
+    const categoryId = document.getElementById('categorySelect').value;
+    if (!categoryId) return;
+    
+    fetch('/chat/api/products-by-category/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ category_id: categoryId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const resultsDiv = document.getElementById('categoryResults');
+        const productsList = document.getElementById('categoryProductsList');
+        
+        if (data.success) {
+            resultsDiv.style.display = 'block';
+            productsList.innerHTML = '';
+            
+            if (data.products.length > 0) {
+                data.products.forEach(product => {
+                    const productDiv = document.createElement('div');
+                    productDiv.className = 'product-item';
+                    productDiv.innerHTML = `
+                        <strong>${product.name}</strong><br>
+                        <small>Precio: $${product.price} | Stock: ${product.stock}</small>
+                        <p class="mb-1">${product.description}</p>
+                    `;
+                    productsList.appendChild(productDiv);
+                });
+            } else {
+                productsList.innerHTML = '<p class="text-muted">No hay productos en esta categoría.</p>';
+            }
+        }
+    });
+}
+
+function compareProducts() {
+    const product1 = document.getElementById('productSelect1').value;
+    const product2 = document.getElementById('productSelect2').value;
+    
+    if (!product1 || !product2) {
+        alert('Por favor selecciona dos productos para comparar');
+        return;
+    }
+    
+    fetch('/chat/api/compare-products/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ product_ids: [product1, product2] })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('comparisonContent').innerHTML = 
+                data.comparison.replace(/\n/g, '<br>');
+            new bootstrap.Modal(document.getElementById('comparisonModal')).show();
+        } else {
+            alert('Error al comparar productos: ' + data.error);
+        }
+    });
+}
+
+// Función auxiliar para obtener cookies
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

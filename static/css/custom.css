@@ -1,0 +1,154 @@
+/* ==========================================
+   SISTEMA DE RATING MEJORADO - VERSIÓN AJUSTADA
+   ========================================== */
+
+/* Variables */
+:root {
+  --rating-size: clamp(1.25rem, 2.5vw, 1.75rem);
+  --rating-size-sm: clamp(1rem, 2vw, 1.25rem);
+  --rating-size-lg: clamp(1.75rem, 3vw, 2.5rem);
+  --rating-gap: 0.05rem;
+  --rating-color-empty: #e5e5e5;
+  --rating-color-filled: #ffb503;
+  --rating-color-hover: #ffc933;
+  --rating-color-active: #cc9000;
+  --rating-transition: color 0.2s ease, transform 0.2s ease;
+}
+
+/* ========================
+   CONTENEDOR INTERACTIVO
+   ======================== */
+
+.rate {
+  display: inline-flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  gap: var(--rating-gap);
+  border: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+}
+
+/* Ocultar inputs */
+.rate > input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* ========================
+   ESTRELLAS
+   ======================== */
+
+.rate > label {
+  cursor: pointer;
+  font-size: var(--rating-size);
+  color: var(--rating-color-empty);
+  transition: var(--rating-transition);
+  margin: 0;
+  position: relative;
+  display: inline-block;
+  line-height: 1;
+}
+
+/* Icono de estrella completa */
+.rate > label::before {
+  font-family: "Font Awesome 5 Free", "Font Awesome 6 Free";
+  font-weight: 900;
+  content: "\f005"; /* fa-star */
+  display: block;
+}
+
+/* Media estrella */
+.rate > label.half::before {
+  content: "\f089"; /* fa-star-half */
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 50%;
+  overflow: hidden;
+  text-align: center;
+}
+
+/* Para que las medias estrellas estén unidas visualmente */
+.rate > label.half {
+  margin-right: -0.35rem; /* solapa la media estrella */
+}
+
+/* ========================
+   INTERACCIÓN
+   ======================== */
+
+/* Hover */
+.rate > label:hover,
+.rate > label:hover ~ label {
+  color: var(--rating-color-hover);
+  transform: scale(1.05);
+}
+
+/* Checked */
+.rate > input:checked ~ label {
+  color: var(--rating-color-filled);
+}
+
+/* Checked + Hover */
+.rate > input:checked ~ label:hover,
+.rate > input:checked ~ label:hover ~ label {
+  color: var(--rating-color-active);
+}
+
+/* Focus */
+.rate > input:focus-visible ~ label {
+  outline: 2px solid var(--rating-color-filled);
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+/* ========================
+   RESPONSIVE
+   ======================== */
+
+@media (max-width: 640px) {
+  :root {
+    --rating-size: 1.25rem;
+  }
+  .rate > label {
+    font-size: var(--rating-size);
+  }
+}
+
+@media (min-width: 1025px) {
+  .rate > label:hover {
+    transform: scale(1.08);
+  }
+}
+
+/* ========================
+   DARK MODE
+   ======================== */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --rating-color-empty: #404040;
+    --rating-color-filled: #ffc933;
+    --rating-color-hover: #ffd966;
+    --rating-color-active: #e6b800;
+  }
+}
+
+/* ========================
+   REDUCIR ANIMACIONES
+   ======================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .rate > label {
+    transition: color 0.1s ease;
+  }
+  .rate > label:hover {
+    transform: none;
+  }
+}

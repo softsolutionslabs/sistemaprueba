@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Factura Electrónica</title>
+    <style>
+        /* ESTILOS COMPATIBLES CON PDF */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body { 
+            font-family: Arial, sans-serif; 
+            font-size: 11px; 
+            padding: 10px; 
+            color: #000;
+            background: #fff;
+            line-height: 1.2;
+        }
+        
+        .invoice-container { 
+            width: 100%; 
+            border: 2px solid #000;
+        }
+        
+        /* TABLAS EN LUGAR DE FLEXBOX */
+        .table-layout {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table-layout td {
+            vertical-align: top;
+            padding: 8px;
+        }
+        
+        .border-right {
+            border-right: 2px solid #000;
+        }
+        
+        .border-bottom {
+            border-bottom: 2px solid #000;
+        }
+        
+        .border-top {
+            border-top: 2px solid #000;
+        }
+        
+        .company-name {
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        
+        .company-detail {
+            font-size: 10px;
+            margin-bottom: 2px;
+        }
+        
+        .ruc-box {
+            border: 1px solid #000;
+            padding: 3px 8px;
+            display: inline-block;
+            margin: 5px 0;
+            font-weight: bold;
+        }
+        
+        .factura-type {
+            margin: 5px 0;
+        }
+        
+        .checkbox-item {
+            display: inline-block;
+            margin-right: 10px;
+        }
+        
+        .checkbox {
+            width: 12px;
+            height: 12px;
+            border: 1px solid #000;
+            display: inline-block;
+            margin-right: 3px;
+        }
+        
+        .checkbox.checked::before {
+            content: 'X';
+            display: block;
+            text-align: center;
+            line-height: 10px;
+            font-weight: bold;
+            font-size: 9px;
+        }
+        
+        .invoice-number {
+            font-size: 12px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        
+        .section-header {
+            font-weight: bold;
+            font-size: 10px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        
+        .info-line {
+            font-size: 10px;
+            margin-bottom: 3px;
+        }
+        
+        .info-label {
+            font-weight: bold;
+        }
+        
+        /* TABLA DE ITEMS - MANTENIDO */
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+        
+        .items-table th {
+            background-color: #e0e0e0;
+            border: 1px solid #000;
+            padding: 4px 2px;
+            font-size: 9px;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .items-table td {
+            border: 1px solid #000;
+            padding: 4px 2px;
+            font-size: 10px;
+            text-align: center;
+        }
+        
+        .items-table td.left {
+            text-align: left;
+            padding-left: 5px;
+        }
+        
+        .items-table td.right {
+            text-align: right;
+            padding-right: 5px;
+        }
+        
+        /* TOTALES */
+        .total-line {
+            margin-bottom: 3px;
+            font-size: 10px;
+        }
+        
+        .total-line.main {
+            font-weight: bold;
+            font-size: 11px;
+            margin-top: 5px;
+            padding-top: 5px;
+            border-top: 1px solid #000;
+        }
+        
+        .iva-section {
+            margin-top: 8px;
+            padding-top: 5px;
+            border-top: 1px solid #000;
+        }
+        
+        /* PIE DE PÁGINA */
+        .footer-note {
+            font-size: 9px;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        
+        .cdc-section {
+            text-align: center;
+            margin-top: 10px;
+        }
+        
+        .cdc-label {
+            font-size: 9px;
+            margin-bottom: 3px;
+        }
+        
+        .cdc-code {
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin: 5px 0;
+        }
+        
+        .validation-url {
+            font-size: 9px;
+            margin-top: 3px;
+        }
+        
+        .xml-note {
+            font-size: 8px;
+            font-weight: bold;
+            margin-top: 8px;
+            text-align: center;
+        }
+        
+        .test-stamp {
+            background-color: #fff3cd;
+            padding: 5px;
+            text-align: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: #856404;
+            border-top: 2px solid #000;
+        }
+        
+        /* ALINEACIONES */
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .text-left { text-align: left; }
+        .text-bold { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <table class="invoice-container">
+        <!-- HEADER -->
+        <tr>
+            <td colspan="2" class="border-bottom">
+                <table class="table-layout">
+                    <tr>
+                        <td width="60%" class="border-right">
+                            <div class="company-name">DavBorn Store</div>
+                            <div class="company-detail">Av. Monday Barrio San Miguel</div>
+                            <div class="company-detail">Presidente Franco - Paraguay</div>
+                            <div class="company-detail">Teléfono: (021) 123-456</div>
+                            <div class="company-detail">Email: surubi991@gmail.com</div>
+                            <div class="ruc-box">RUC: 80012345-1</div>
+                        </td>
+                        <td width="40%">
+                            <div class="ruc-box" style="width: 100%; text-align: center;">RUC: 80012345-1</div>
+                            
+                            <div class="factura-type">
+                                <div class="checkbox-item">
+                                    <div class="checkbox"></div>
+                                    <span>CRÉDITO</span>
+                                </div>
+                                <div class="checkbox-item">
+                                    <div class="checkbox checked"></div>
+                                    <span>CONTADO</span>
+                                </div>
+                            </div>
+                            
+                            <div style="margin: 5px 0;">
+                                <div style="font-size: 10px;">TIMBRADO N°:</div>
+                                <div style="font-weight: bold;">1234567</div>
+                            </div>
+                            
+                            <div style="margin: 5px 0;">
+                                <div style="font-size: 10px;">VÁLIDO HASTA:</div>
+                                <div style="font-weight: bold;">30/11/2025</div>
+                            </div>
+                            
+                            <div class="invoice-number">
+                                Factura N°<br>
+                                {{ formatted_invoice_number }}
+                            </div>
+                            
+                            <div style="margin-top: 5px;">
+                                <div class="section-header" style="font-size: 9px;">DATOS DE LA FACTURA</div>
+                                <div style="font-size: 9px;">Cuenta N°:</div>
+                                <div style="font-size: 9px;">Fecha: {{ order.created_at|date:"d/m/Y" }}</div>
+                                <div style="font-size: 9px;">Cód. Despacho:</div>
+                                <div style="font-size: 9px;">Cod. Operador:</div>
+                                <div style="font-size: 9px; color: #d00;">Fecha Vencimiento: {{ order.created_at|date:"d/m/Y" }}</div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        
+        <!-- SECCIÓN CLIENTE E INFO -->
+        <tr>
+            <td colspan="2" class="border-bottom">
+                <table class="table-layout">
+                    <tr>
+                        <td width="60%" class="border-right">
+                            <div class="section-header">Datos del Cliente o Razón Social</div>
+                            <div class="info-line">
+                                <span class="info-label">Nombres:</span>
+                                {{ order.first_name }} {{ order.last_name }}
+                            </div>
+                            <div class="info-line">
+                                <span class="info-label">CI-RUC-NIF:</span>
+                                {{ order.ruc|default:"N/A" }}
+                            </div>
+                            <div class="info-line">
+                                <span class="info-label">N° Casa:</span>
+                            </div>
+                            <div class="info-line">
+                                <span class="info-label">Calle, Ciudad:</span>
+                                {{ order.addres_line_1 }} {{ order.addres_line_2 }}
+                            </div>
+                            <div class="info-line">
+                                <span class="info-label">Teléfono:</span>
+                                {{ order.phone }}
+                            </div>
+                            <div class="info-line">
+                                <span class="info-label">Email:</span>
+                                {{ order.email }}
+                            </div>
+                        </td>
+                        <td width="40%">
+                            <div style="font-size: 10px; font-weight: bold; margin-bottom: 8px;">PRECIO INCLUYE IVA</div>
+                            <div style="font-size: 9px; margin-bottom: 3px;">Moneda: Guaraní</div>
+                            <div style="font-size: 9px; margin-bottom: 3px;">Tipo: Venta de productos tecnológicos y de oficina</div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        
+        <!-- TABLA DE ITEMS -->
+        <tr>
+            <td colspan="2">
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 8%;">CÓDIGO</th>
+                            <th style="width: 32%;">CONCEPTO-DESCRIPCIÓN</th>
+                            <th style="width: 10%;">CANTIDAD</th>
+                            <th style="width: 8%;">UNIDAD</th>
+                            <th style="width: 12%;">PRECIO<br>UNITARIO</th>
+                            <th style="width: 10%;">EXENTAS</th>
+                            <th style="width: 10%;">5%</th>
+                            <th style="width: 10%;">10%</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order_items %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td class="left">{{ item.product.product_name }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>UNI</td>
+                            <td class="right">{{ item.product_price|floatformat:0 }}</td>
+                            <td class="right">0</td>
+                            <td class="right">0</td>
+                            <td class="right">{{ item.product_price|floatformat:0 }}</td>
+                        </tr>
+                        {% endfor %}
+                        <!-- Filas vacías para mantener estructura -->
+                        {% for i in "123" %}
+                        <tr style="height: 15px;">
+                            <td colspan="8"></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+        
+        <!-- TOTALES -->
+        <tr>
+            <td colspan="2" class="border-top">
+                <table class="table-layout">
+                    <tr>
+                        <td width="50%" class="border-right">
+                            <div class="total-line">
+                                <span>SUB-TOTALES:</span>
+                                <span class="text-bold">Gs.</span>
+                            </div>
+                            <div class="total-line">
+                                <span>Total a pagar COPACO:</span>
+                                <span>{{ subtotal|floatformat:0 }}</span>
+                            </div>
+                            <div class="total-line">
+                                <span>Convenio COPACO-ISP & FIX:</span>
+                                <span>0</span>
+                            </div>
+                            <div class="total-line main">
+                                <span>TOTAL A PAGAR:</span>
+                                <span>{{ total_operation|floatformat:0 }}</span>
+                            </div>
+                            
+                            <div class="iva-section">
+                                <div class="total-line">
+                                    <span>LIQUIDACIÓN DEL IVA:</span>
+                                    <span>(5)%</span>
+                                </div>
+                                <div class="total-line" style="font-size: 9px; margin-left: 20px;">
+                                    <span>5 (10%)</span>
+                                    <span>{{ liquidation_iva|floatformat:0 }}</span>
+                                </div>
+                                <div class="total-line" style="font-size: 9px; margin-left: 20px;">
+                                    <span>TOTAL IVA:</span>
+                                    <span>{{ total_iva|floatformat:0 }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td width="50%">
+                            <div style="font-size: 9px; margin-bottom: 5px;">
+                                <strong>Ver detalle en Justifica cargos anteriores.</strong>
+                            </div>
+                            <div style="font-size: 9px; margin-bottom: 10px;">
+                                <strong>MENSAJES PARA EL CLIENTE:</strong>
+                            </div>
+                            
+                            {% if order.order_note %}
+                            <div style="background: #f9f9f9; padding: 5px; border: 1px solid #ddd; font-size: 9px;">
+                                <strong>Nota:</strong> {{ order.order_note }}
+                            </div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        
+        <!-- STAMP DE PRUEBA -->
+        <tr>
+            <td colspan="2" class="test-stamp">
+                DE generado en ambiente de prueba - sin valor comercial ni fiscal
+            </td>
+        </tr>
+        
+        <!-- FOOTER -->
+        <tr>
+            <td colspan="2">
+                <div class="footer-section">
+                    <div class="footer-note">
+                        <strong>*** AVISO ***</strong><br>
+                        Aviso Importante: Esta es una representación gráfica de una factura legal<br>
+                        Realizado con fines educativos
+                    </div>
+                    
+                    <div class="cdc-section">
+                        <div class="cdc-label">Consulte la validez de esta Factura Electrónica con el número de CDC impreso abajo en:</div>
+                        <div class="validation-url">https://ekuatia.set.gov.py/consultas-test/</div>
+                        <div class="cdc-code">3 0180 0005 1980 0100 2800 0915 1202 0102 2110 3069 8874</div>
+                        <div class="xml-note">ESTE DOCUMENTO ES UNA REPRESENTACIÓN GRÁFICA DE UN DOCUMENTO ELECTRÓNICO (XML)</div>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
