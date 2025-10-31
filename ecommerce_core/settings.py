@@ -165,7 +165,7 @@ if IS_RAILWAY or IS_RENDER:
     railway_host = os.environ.get('RAILWAY_STATIC_URL')
     if railway_host:
         ALLOWED_HOSTS.append(railway_host.replace('https://', '').replace('http://', ''))
-    
+        ALLOWED_HOSTS.append('walrus-app-z6gn3.ondigitalocean.app')
     # Database from Railway PostgreSQL
     DATABASES = {
         'default': dj_database_url.config(
