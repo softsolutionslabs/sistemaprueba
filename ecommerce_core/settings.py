@@ -137,3 +137,82 @@ if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+
+
+# =============================================================================
+# RAILWAY PRODUCTION SETTINGS
+# =============================================================================
+import os
+import dj_database_url
+
+# Detect if we're running on Railway
+IS_RAILWAY = os.environ.get('RAILWAY_ENVIRONMENT') == 'production'
+IS_RENDER = os.environ.get('RENDER') is not None
+
+if IS_RAILWAY or IS_RENDER:
+    print("🚀 Running in production mode (Railway/Render)")
+    
+    # Security
+    DEBUG = False
+    ALLOWED_HOSTS = [
+        '.railway.app',
+        '.render.com', 
+        'localhost',
+        '127.0.0.1'
+    ]
+    
+    # Get allowed hosts from environment
+    railway_host = os.environ.get('RAILWAY_STATIC_URL')
+    if railway_host:
+        ALLOWED_HOSTS.append(railway_host.replace('https://', '').replace('http://', ''))
+    
+    # Database from Railway PostgreSQL
+    DATABASES = {
+        'default': dj_database_url.config(
+            conn_max_age=600,
+            conn_health_checks=True,
+            ssl_require=True
+        )
+    }
+    
+    # Static files configuration
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+    
+    # Ensure Whitenoise is properly configured
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    
+    # Security headers
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    
+    # Logging
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+            },
+        },
+        'root': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['console'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+        },
+    }
+
+# Health check for Railway
+def health_check(request):
+    from django.http import JsonResponse
+    return JsonResponse({"status": "healthy", "service": "ecommerce-django"})

@@ -1,14 +1,14 @@
+# docker-compose.yml
 services:
   web:
     build: .
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
-      - .:/app  
     ports:
-      - "8000:8000"  
+      - "8000:8000"
     environment:
-      - DEBUG=True  
+      - DEBUG=False
       - DATABASE_URL=postgresql://ecommerce_user:ecommerce_password@db:5432/ecommerce_db
       - SECRET_KEY=django-insecure-cb5p1gemk_$+4n9lrxusd8=p-0yd(l73b+16*hu!f%ld$w*b)d
     depends_on:
@@ -24,6 +24,8 @@ services:
       - POSTGRES_DB=ecommerce_db
       - POSTGRES_USER=ecommerce_user
       - POSTGRES_PASSWORD=ecommerce_password
+    ports:
+      - "5432:5432"
 
 volumes:
   postgres_data:

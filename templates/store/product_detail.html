@@ -75,17 +75,14 @@
       </div> <!-- row.// -->
       <hr>
 
-      {% if single_product.stock <= 0 %} <h5>Producto fuera de Stock</h5>
-
-        {% else %}
-
-        <button type="submit" class="btn  btn-primary"> <span class="text">Agregar al
-            shopping cart</span> <i class="fas fa-shopping-cart"></i> </button>
-
-        
-
-
-        {% endif %}
+            {% if single_product.stock <= 0 %}
+                <h5>Producto fuera de Stock</h5>
+            {% else %}
+                <button type="submit" class="btn btn-primary">
+                    <span class="text">Agregar al shopping cart</span>
+                    <i class="fas fa-shopping-cart"></i>
+                </button>
+            {% endif %}
 
         </article> <!-- product-info-aside .// -->
         </form>

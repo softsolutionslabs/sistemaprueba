@@ -1,4 +1,3 @@
-# .gitignore
 # Django
 *.pyc
 *~
@@ -7,8 +6,9 @@ __pycache__/
 *.log
 .env
 .env.local
+.env.production
 
-# Static files
+# Static files (collected in production)
 /staticfiles/
 /media/
 
@@ -24,3 +24,16 @@ Thumbs.db
 
 # Docker
 .dockerignore
+Dockerfile
+docker-compose.yml
+
+# Database
+db.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+temp/
+tmp/

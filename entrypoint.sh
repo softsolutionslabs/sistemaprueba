@@ -1,5 +1,5 @@
 #!/bin/sh
-# entrypoint.sh - VERSIÓN CON DJANGO RUNSERVER
+# entrypoint.sh - VERSIÓN CORREGIDA
 
 set -e
 
@@ -15,15 +15,15 @@ python manage.py migrate --noinput
 echo "Creating superuser..."
 python manage.py shell -c "
 from accounts.models import Account
-if not Account.objects.filter(email='admin@gmail.com').exists():
+if not Account.objects.filter(email='admin@docker.com').exists():
     Account.objects.create_superuser(
         first_name='Admin',
         last_name='Docker',
-        email='admin@gmail.com',
+        email='admin@docker.com',
         username='admin',
-        password='admin1234'
+        password='admin123'
     )
-    print('Superuser created: admin@gmail.com / admin123')
+    print('Superuser created: admin@docker.com / admin123')
 else:
     print('Superuser already exists')
 "
@@ -31,5 +31,6 @@ else:
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
-echo "Starting Django development server..."
-exec python manage.py runserver 0.0.0.0:8000 --noreload
+echo "Starting server..."
+# CONFIGURACIÓN CORREGIDA PARA WINDOWS
+exec gunicorn --bind 0.0.0.0:8000 --workers 1 --threads 4 --worker-class sync --max-requests 1000 --max-requests-jitter 100 ecommerce_core.wsgi:application
