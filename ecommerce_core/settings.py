@@ -157,7 +157,8 @@ if IS_RAILWAY or IS_RENDER:
         '.railway.app',
         '.render.com', 
         'localhost',
-        '127.0.0.1'
+        '127.0.0.1',
+        'walrus-app-z6gn3.ondigitalocean.app'
     ]
     
     # Get allowed hosts from environment
