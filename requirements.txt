@@ -1,3 +1,4 @@
+# requirements.txt - VERSIÓN COMPLETA ORIGINAL
 annotated-types==0.7.0
 arabic-reshaper==3.0.0
 asgiref==3.10.0

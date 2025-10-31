@@ -1,0 +1,33 @@
+# docker-compose.yml
+services:
+  web:
+    build: .
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=False
+      - DATABASE_URL=postgresql://ecommerce_user:ecommerce_password@db:5432/ecommerce_db
+      - SECRET_KEY=clave-secreta-docker-cambiar-en-produccion
+    depends_on:
+      - db
+    env_file:
+      - .env.docker
+
+  db:
+    image: postgres:13
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=ecommerce_db
+      - POSTGRES_USER=ecommerce_user
+      - POSTGRES_PASSWORD=ecommerce_password
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
